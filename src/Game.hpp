@@ -30,7 +30,8 @@ private:
 	void movement();
 	void collision();
 	void animation();
-	void inputs();
+	void input();
+	void state();
 
 	std::shared_ptr<Entity> mPlayer;
 	Renderer mRenderer;

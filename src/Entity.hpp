@@ -18,6 +18,7 @@ struct Input {
 	bool down = false;
 	bool right = false;
 	bool left = false;
+	bool attack = false;
 };
 
 class Entity {
@@ -41,6 +42,7 @@ public:
 	const std::string& animationTag() const { return mAnimation.tag(); }
 
 	std::string state = "idle";
+	std::string prevState = "down";
 	Input input;
 
 private:

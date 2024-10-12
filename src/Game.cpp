@@ -1,6 +1,7 @@
 #include "Game.hpp"
 
 #include <SFML/System/Vector2.hpp>
+#include <SFML/Window/Keyboard.hpp>
 #include <iostream>
 
 Game::Game() {
@@ -28,7 +29,8 @@ Game::Game() {
 // Public
 void Game::run() {
 	while(GameState::getInstance().window().isOpen()) {
-		inputs();
+		input();
+		state();
 		movement();
 		collision();
 		animation();
@@ -46,22 +48,6 @@ void Game::movement() {
 	int incY = (mPlayer->input.down - mPlayer->input.up) *
 			((mPlayer->input.right || mPlayer->input.left) ? 0.7071 : 1) * 
 			mPlayer->speed().y;
-
-	if(incX < 0) {
-		mPlayer->state = "left";
-	}
-	if(incX > 0) {
-		mPlayer->state = "right";
-	}
-	if(incY > 0) {
-		mPlayer->state = "down";
-	}
-	if(incY < 0) {
-		mPlayer->state = "up";
-	}
-	if(incX == 0 && incY == 0) {
-		mPlayer->state = "idle";
-	}
 
 	position.x += incX;
 	position.y += incY;
@@ -109,19 +95,87 @@ void Game::animation() {
 	if(mPlayer->state == "up" && mPlayer->animationTag() != "player_6")
 		mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_6"));
 
-	if(mPlayer->state == "right" && mPlayer->animationTag() != "player_5")
-		mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_5"));
-
-	if(mPlayer->state == "left" && mPlayer->animationTag() != "player_5") {
-		mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_5"));
-		mPlayer->sprite().setScale(-SCALE, SCALE);
+	if (mPlayer->state == "right") {
+		if (mPlayer->animationTag() != "player_5") {
+			mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_5"));
+		}
+		mPlayer->sprite().setScale(SCALE, SCALE); // Reset to default scale when moving right
 	}
 
-	if(mPlayer->state == "idle" && mPlayer->animationTag() != "player_1")
-		mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_1"));
+	if (mPlayer->state == "left") {
+		if (mPlayer->animationTag() != "player_5") {
+			mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_5"));
+		}
+		mPlayer->sprite().setScale(-SCALE, SCALE); // Flip the sprite when moving left
+	}
+
+	if(mPlayer->state == "attack") {
+		if(mPlayer->prevState == "down" && mPlayer->animationTag() != "player_7")
+			mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_7"));
+
+		if(mPlayer->prevState == "up" && mPlayer->animationTag() != "player_9")
+			mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_9"));
+
+		if(mPlayer->prevState == "right") {
+			if (mPlayer->animationTag() != "player_8") {
+				mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_8"));
+			}
+			mPlayer->sprite().setScale(SCALE, SCALE); // Reset to default scale when moving right
+		}
+
+		if(mPlayer->prevState == "left") {
+			if (mPlayer->animationTag() != "player_8") {
+				mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_8"));
+			}
+			mPlayer->sprite().setScale(-SCALE, SCALE); // Flip the sprite when moving left
+		}
+	}
+
+	if(mPlayer->state == "idle") {
+		if(mPlayer->prevState == "down" && mPlayer->animationTag() != "player_1")
+			mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_1"));
+
+		if(mPlayer->prevState == "up" && mPlayer->animationTag() != "player_3")
+			mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_3"));
+
+		if(mPlayer->prevState == "right") {
+			if (mPlayer->animationTag() != "player_2") {
+				mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_2"));
+			}
+			mPlayer->sprite().setScale(SCALE, SCALE); // Reset to default scale when moving right
+		}
+
+		if(mPlayer->prevState == "left") {
+			if (mPlayer->animationTag() != "player_2") {
+				mPlayer->setAnimation(GameState::getInstance().assets().getAnimation("player_2"));
+			}
+			mPlayer->sprite().setScale(-SCALE, SCALE); // Flip the sprite when moving left
+		}
+	}
 }
 
-void Game::inputs() {
+void Game::input() {
+	auto& window = GameState::getInstance().window();
+
+	sf::Event event;
+	while(window.pollEvent(event)) {
+		if(event.type == sf::Event::Closed) {
+			window.close();
+		}
+
+		if(event.type == sf::Event::KeyPressed) {
+			if(event.key.code == sf::Keyboard::Space) {
+				std::cout << "attack" << std::endl;
+				mPlayer->input.attack = true;
+			}
+		}
+		if(event.type == sf::Event::KeyReleased) {
+			if(event.key.code == sf::Keyboard::Space) {
+				mPlayer->input.attack = false;
+			}
+		}
+	}
+
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
 		mPlayer->input.up = true;
 	}
@@ -146,4 +200,30 @@ void Game::inputs() {
 	else {
 		mPlayer->input.left = false;
 	}
+}
+
+void Game::state() {
+	if(mPlayer->input.left) {
+		mPlayer->state = "left";
+		mPlayer->prevState = "left";
+	}
+	else if(mPlayer->input.right) {
+		mPlayer->state = "right";
+		mPlayer->prevState = "right";
+	}
+	else if(mPlayer->input.down) {
+		mPlayer->state = "down";
+		mPlayer->prevState = "down";
+	}
+	else if(mPlayer->input.up) {
+		mPlayer->state = "up";
+		mPlayer->prevState = "up";
+	}
+	else if(mPlayer->input.attack) {
+		mPlayer->state = "attack";
+	}
+	else {
+		mPlayer->state = "idle";
+	}
+
 }

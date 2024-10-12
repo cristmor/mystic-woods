@@ -8,6 +8,4 @@ public:
 	Renderer() {}
 
 	void render();
-private:
-	void escape();
 };

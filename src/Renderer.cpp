@@ -14,18 +14,4 @@ void Renderer::render() {
 		}
 	}
 	window.display();
-
-	escape();
-}
-
-// Private
-void Renderer::escape() {
-	auto& window = GameState::getInstance().window();
-
-	sf::Event event;
-	while(window.pollEvent(event)) {
-		if(event.type == sf::Event::Closed) {
-			window.close();
-		}
-	}
 }
